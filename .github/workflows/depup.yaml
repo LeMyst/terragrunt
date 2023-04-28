@@ -1,0 +1,22 @@
+name: depup
+on:
+  schedule:
+    - cron:  '14 1,7,13,19 * * *'
+
+jobs:
+  reviewdog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: reviewdog/action-depup/with-pr@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          file: Dockerfile
+          version_name: TERRAFORM_VERSION
+          repo: hashicorp/terraform
+      - uses: reviewdog/action-depup/with-pr@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          file: Dockerfile
+          version_name: TERRAGRUNT_VERSION
+          repo: gruntwork-io/terragrunt
