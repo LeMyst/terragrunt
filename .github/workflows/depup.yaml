@@ -9,13 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: reviewdog/action-depup/with-pr@v1
+      - uses: lemyst/action-depup/with-pr@allow-prelease
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           file: Dockerfile
           version_name: TERRAFORM_VERSION
           repo: hashicorp/terraform
-      - uses: reviewdog/action-depup/with-pr@v1
+      - uses:  lemyst/action-depup/with-pr@allow-prelease
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           file: Dockerfile
