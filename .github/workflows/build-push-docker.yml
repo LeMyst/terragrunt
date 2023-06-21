@@ -51,7 +51,7 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/lemyst/terragrunt:${{ steps.id.outputs.digest }}'
+          image-ref: 'ghcr.io/lemyst/terragrunt@${{ steps.push.outputs.digest }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
 
