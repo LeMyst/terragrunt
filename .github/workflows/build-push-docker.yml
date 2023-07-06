@@ -39,19 +39,19 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push
-        id: push
+      - name: Build and push locally
+        id: local-push
         uses: docker/build-push-action@v4.1.1
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/lemyst/terragrunt@${{ steps.push.outputs.digest }}'
+          image-ref: ${{ steps.meta.outputs.tags }}
           format: 'sarif'
           output: 'trivy-results.sarif'
 
@@ -60,3 +60,12 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: Build and push registry
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v4.1.1
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
