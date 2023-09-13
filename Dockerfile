@@ -2,7 +2,7 @@ ARG TERRAFORM_VERSION=1.5.7
 
 FROM hashicorp/terraform:$TERRAFORM_VERSION
 
-ARG TERRAGRUNT_VERSION=0.50.15
+ARG TERRAGRUNT_VERSION=0.50.16
 
 RUN apk add --update --upgrade --no-cache bash git openssh
 
