@@ -1,13 +1,32 @@
+FROM alpine:latest AS downloader
+
 ARG TERRAFORM_VERSION=1.6.0
-
-FROM hashicorp/terraform:$TERRAFORM_VERSION
-
+ARG TOFU_VERSION=1.6.0-alpha2
 ARG TERRAGRUNT_VERSION=0.52.0
 
-RUN apk add --update --upgrade --no-cache bash git openssh
+RUN apk add unzip
 
-ADD https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64 /bin/terragrunt
+WORKDIR /tmp
+
+# Download & unzip TERRAFORM
+ADD https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform.zip
+RUN unzip terraform.zip
+
+# Download & unzip TOFU
+ADD https://github.com/opentofu/opentofu/releases/download/v1.6.0-alpha2/tofu_1.6.0-alpha2_linux_amd64.zip tofu.zip
+RUN unzip tofu.zip
+
+# Download TERRAGRUNT
+ADD https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64 terragrunt
+
+FROM docker.mirror.hashicorp.services/golang:alpine
+
+COPY --from=downloader /tmp/terraform /bin/terraform
+COPY --from=downloader /tmp/tofu /bin/tofu
+COPY --from=downloader /tmp/terragrunt /bin/terragrunt
+
+RUN apk add --update --upgrade --no-cache bash git openssh && rm -rf /var/cache/apt/*
 
 RUN chmod +x /bin/terragrunt
 
-ENTRYPOINT []
+ENTRYPOINT ["terragrunt", "--version"]
