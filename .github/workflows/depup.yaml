@@ -19,5 +19,11 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           file: Dockerfile
+          version_name: TOFU_VERSION
+          repo: opentofu/opentofu
+      - uses:  lemyst/action-depup/with-pr@allow-prelease
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          file: Dockerfile
           version_name: TERRAGRUNT_VERSION
           repo: gruntwork-io/terragrunt
