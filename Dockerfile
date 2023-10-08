@@ -19,7 +19,7 @@ RUN unzip tofu.zip
 # Download TERRAGRUNT
 ADD https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64 terragrunt
 
-FROM docker.mirror.hashicorp.services/golang:alpine
+FROM golang:alpine
 
 COPY --from=downloader /tmp/terraform /bin/terraform
 COPY --from=downloader /tmp/tofu /bin/tofu
