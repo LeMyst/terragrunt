@@ -27,6 +27,8 @@ COPY --from=downloader /tmp/terragrunt /bin/terragrunt
 
 RUN apk add --update --upgrade --no-cache bash git openssh && rm -rf /var/cache/apt/*
 
+RUN chmod +x /bin/terraform
+RUN chmod +x /bin/tofu
 RUN chmod +x /bin/terragrunt
 
 ENTRYPOINT ["terragrunt", "--version"]
