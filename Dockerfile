@@ -1,7 +1,7 @@
 FROM alpine:latest AS downloader
 
 ARG TERRAFORM_VERSION=1.6.5
-ARG TOFU_VERSION=1.6.0-alpha5
+ARG TOFU_VERSION=1.6.0-beta1
 ARG TERRAGRUNT_VERSION=0.53.8
 
 RUN apk add unzip
