@@ -1,0 +1,154 @@
+name: Main
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'
+
+      - name: Get latest release
+        id: get_latest_release
+        run: |
+          latest_release=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
+          echo "latest_release=$latest_release" >> $GITHUB_OUTPUT
+
+      - name: Download previous Dockerfile
+        run: |
+          curl -L -o previous_Dockerfile https://raw.githubusercontent.com/${{ github.repository }}/${{ steps.get_latest_release.outputs.latest_release }}/Dockerfile
+
+      - name: Extract current terragrunt version from Dockerfile
+        id: terragrunt_version
+        run: echo "version=$(grep 'ARG TERRAGRUNT_VERSION' Dockerfile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+
+      - name: Extract previous terragrunt version from Dockerfile
+        id: previous_terragrunt_version
+        run: echo "version=$(grep 'ARG TERRAGRUNT_VERSION' previous_Dockerfile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+
+      - name: Set terragrunt version in the changelog
+        if: ${{ steps.terragrunt_version.outputs.version != steps.previous_terragrunt_version.outputs.version }}
+        run: |
+          echo "changelog<<EOF" >> $GITHUB_ENV
+          echo -e "Update terragrunt to ${{ steps.terragrunt_version.outputs.version }}\n" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Extract current terraform version from Dockerfile
+        id: terraform_version
+        run: echo "version=$(grep 'ARG TERRAFORM_VERSION' Dockerfile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+  
+      - name: Extract previous terraform version from Dockerfile
+        id: previous_terraform_version
+        run: echo "version=$(grep 'ARG TERRAFORM_VERSION' previous_Dockerfile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+
+      - name: Set terraform version in the changelog
+        if: ${{ steps.terraform_version.outputs.version != steps.previous_terraform_version.outputs.version }}
+        run: |
+          echo "changelog<<EOF" >> $GITHUB_ENV
+          echo -e "${{ env.changelog }}Update terraform to ${{ steps.terraform_version.outputs.version }}\n" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Extract current opentofu version from Dockerfile
+        id: opentofu_version
+        run: echo "version=$(grep 'ARG TOFU_VERSION' Dockerfile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+
+      - name: Extract previous opentofu version from Dockerfile
+        id: previous_opentofu_version
+        run: echo "version=$(grep 'ARG TOFU_VERSION' previous_Dockerfile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+
+      - name: Set opentofu version in the changelog
+        if: ${{ steps.opentofu_version.outputs.version != steps.previous_opentofu_version.outputs.version }}
+        run: |
+          echo "changelog<<EOF" >> $GITHUB_ENV
+          echo -e "${{ env.changelog }}Update opentofu to ${{ steps.opentofu_version.outputs.version }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Remove trailing emptylines from multilines changelog
+        if: env.changelog != ''
+        run: |
+          echo "changelog<<EOF" >> $GITHUB_ENV
+          echo "${{ env.changelog }}" | sed -e :a -e '/^\n*$/{$d;N;};/\n$/ba' >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Determine next release number
+        id: next_release
+        uses: actions/github-script@v6
+        env:
+          steps_terragrunt_version_outputs_version: ${{ steps.terragrunt_version.outputs.version }}
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const versionPrefix = process.env['steps_terragrunt_version_outputs_version'];
+            let maxSuffix = 0;
+
+            // Filter out draft releases
+            const nonDraftReleases = releases.filter(release => !release.draft);
+
+            // Process non-draft releases to determine the next release number
+            nonDraftReleases.forEach(release => {
+              const match = release.tag_name.match(new RegExp(`^${versionPrefix}-(\\d+)$`));
+              if (match) {
+                const suffix = parseInt(match[1], 10);
+                if (suffix > maxSuffix) {
+                  maxSuffix = suffix;
+                }
+              }
+            });
+
+            const nextVersion = `${versionPrefix}-${maxSuffix + 1}`;
+            core.setOutput('next_version', nextVersion);
+
+      - name: Update draft release
+        id: update_draft_release
+        uses: actions/github-script@v6
+        env:
+          CHANGELOG: ${{ env.changelog }}
+          NAME: ${{ steps.next_release.outputs.next_version }}
+        if: env.changelog != ''
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const draftRelease = releases.find(release => release.draft);
+            if (draftRelease) {
+              await github.rest.repos.updateRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: draftRelease.id,
+                draft: true,
+                prerelease: false,
+                tag_name: process.env.NAME,
+                target_commitish: 'main',
+                name: process.env.NAME,
+                body: process.env.CHANGELOG,
+              });
+              core.setOutput('draft_release_updated', 'true');
+            } else {
+              core.setOutput('draft_release_updated', 'false');
+            }
+    
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: steps.update_draft_release.outputs.draft_release_updated == 'false' && env.changelog != ''
+        with:
+          draft: true
+          prerelease: false
+          tag_name: ${{ steps.next_release.outputs.next_version }}
+          target_commitish: main
+          name: ${{ steps.next_release.outputs.next_version }}
+          body: ${{ env.changelog }}
