@@ -80,7 +80,7 @@ jobs:
 
       - name: Determine next release number
         id: next_release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           steps_terragrunt_version_outputs_version: ${{ steps.terragrunt_version.outputs.version }}
         with:
@@ -112,7 +112,7 @@ jobs:
 
       - name: Update draft release
         id: update_draft_release
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           CHANGELOG: ${{ env.changelog }}
           NAME: ${{ steps.next_release.outputs.next_version }}
