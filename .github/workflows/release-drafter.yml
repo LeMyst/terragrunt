@@ -90,7 +90,7 @@ jobs:
               repo: context.repo.repo,
             });
 
-            const versionPrefix = process.env['steps_terragrunt_version_outputs_version'];
+            const versionPrefix = process.env['steps_terragrunt_version_outputs_version'].replace(/\n/g, '');
             let maxSuffix = 0;
 
             // Filter out draft releases
