@@ -34,13 +34,13 @@ ADD https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu
 ADD https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_SHA256SUMS.sig tofu_${TOFU_VERSION}_SHA256SUMS.sig
 ADD https://github.com/opentofu/opentofu/releases/download/v${TOFU_VERSION}/tofu_${TOFU_VERSION}_SHA256SUMS.pem tofu_${TOFU_VERSION}_SHA256SUMS.pem
 RUN cosign verify-blob --certificate-identity "https://github.com/opentofu/opentofu/.github/workflows/release.yml@refs/heads/v${TOFU_VERSION%.*}" --signature "tofu_${TOFU_VERSION}_SHA256SUMS.sig" --certificate "tofu_${TOFU_VERSION}_SHA256SUMS.pem" --certificate-oidc-issuer "https://token.actions.githubusercontent.com" tofu_${TOFU_VERSION}_SHA256SUMS
-RUN	grep linux_amd64.zip tofu_${TOFU_VERSION}_SHA256SUMS | sha256sum -c -
+RUN grep linux_amd64.zip tofu_${TOFU_VERSION}_SHA256SUMS | sha256sum -c -
 RUN unzip tofu_${TOFU_VERSION}_linux_amd64.zip
 
 # Download TERRAGRUNT
 ADD https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/terragrunt_linux_amd64 terragrunt_linux_amd64
 ADD https://github.com/gruntwork-io/terragrunt/releases/download/v${TERRAGRUNT_VERSION}/SHA256SUMS terragrunt_SHA256SUMS
-RUN	grep linux_amd64 terragrunt_SHA256SUMS | sha256sum -c -
+RUN grep linux_amd64 terragrunt_SHA256SUMS | sha256sum -c -
 
 FROM golang:alpine
 
