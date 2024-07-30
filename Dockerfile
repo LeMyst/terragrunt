@@ -18,7 +18,7 @@ WORKDIR /tmp
 
 # Download hashicorp public key
 ADD https://keybase.io/hashicorp/pgp_keys.asc hashicorp.asc
-RUN gpg --import hashicorp.asc
+RUN gpg --batch --import --lock-never hashicorp.asc
 
 # Download & check & unzip TERRAFORM
 ADD https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
