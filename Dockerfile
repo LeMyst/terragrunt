@@ -4,7 +4,7 @@ FROM alpine:latest AS downloader
 RUN apk add --no-cache gnupg cosign
 
 # TERRAFORM VERSION
-ARG TERRAFORM_VERSION=1.9.3
+ARG TERRAFORM_VERSION=1.9.4
 
 # TOFU VERSION
 ARG TOFU_VERSION=1.8.0
