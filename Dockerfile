@@ -1,8 +1,5 @@
 FROM alpine:latest AS downloader
 
-# Install GPG
-RUN apk add --no-cache gnupg cosign
-
 # TERRAFORM VERSION
 ARG TERRAFORM_VERSION=1.9.5
 
@@ -12,7 +9,8 @@ ARG TOFU_VERSION=1.8.1
 # TERRAGRUNT VERSION
 ARG TERRAGRUNT_VERSION=0.67.1
 
-RUN apk add unzip
+# Install GPG and unzip
+RUN apk add --no-cache gnupg cosign unzip
 
 WORKDIR /tmp
 
@@ -48,10 +46,10 @@ COPY --from=downloader /tmp/terraform /bin/terraform
 COPY --from=downloader /tmp/tofu /bin/tofu
 COPY --from=downloader /tmp/terragrunt_linux_amd64 /bin/terragrunt
 
-RUN apk add --update --upgrade --no-cache bash git openssh && rm -rf /var/cache/apt/*
+# Install bash, git and openssh and upgrade the system
+RUN apk add --no-cache --upgrade bash git openssh && apk upgrade --no-cache
 
-RUN chmod +x /bin/terraform
-RUN chmod +x /bin/tofu
-RUN chmod +x /bin/terragrunt
+# Make the binaries executable
+RUN chmod +x /bin/terraform && chmod +x /bin/tofu && chmod +x /bin/terragrunt
 
 ENTRYPOINT ["terragrunt", "--version"]
